@@ -1,0 +1,7 @@
+{
+  "id": "hermes",
+  "name": "Hermes gateway",
+  "version": "0.1.0",
+  "main": "index.js",
+  "description": "Profile-scoped Hermes Agent gateway operations and durable paginated run events, including over Switchboard peers."
+}

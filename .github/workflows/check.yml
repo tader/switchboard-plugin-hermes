@@ -1,0 +1,41 @@
+name: Check Hermes plugin
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Expected release PR head commit
+        required: false
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - name: Check dispatched revision
+        if: github.event_name == 'workflow_dispatch' && inputs.expected_sha != ''
+        env:
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: tader/switchboard
+          ref: af10250cab41991ae5f5214de1222bab3fd7de71
+          fetch-depth: 0
+          path: .core
+      - name: Install released core dependencies
+        working-directory: .core
+        run: npm ci --ignore-scripts
+      - name: Released core compatibility
+        env:
+          SWITCHBOARD_CORE_REPO: ${{ github.workspace }}/.core
+        run: npm run test:integration

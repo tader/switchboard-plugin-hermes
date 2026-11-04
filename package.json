@@ -1,0 +1,12 @@
+{
+  "name": "switchboard-plugin-hermes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.0.0" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:integration": "node --test test/integration/core.test.js",
+    "check": "node --check index.js && node --check lib/engine.js && node --check lib/store.js && node --check lib/sse.js && node --check lib/operations.js && node --check test/integration/core.test.js && node --check test/integration/network-guard.mjs"
+  }
+}
