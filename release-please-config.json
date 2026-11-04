@@ -12,7 +12,8 @@
           "path": "plugin.json",
           "jsonpath": "$.version"
         }
-      ]
+      ],
+      "include-component-in-tag": false
     }
   }
 }
