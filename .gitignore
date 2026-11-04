@@ -1,0 +1,12 @@
+node_modules/
+.fixture-*/
+test/.fixture-*/
+test/.integration-*/
+test/.integration-result.json
+test/.integration-*.json
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+.core/
