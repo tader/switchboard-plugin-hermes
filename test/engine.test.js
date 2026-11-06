@@ -68,6 +68,35 @@ test('concurrent run replay sends once with exact key and consumes SSE into dura
   assert.ok(results.some(r => r.status === 'accepted'));
 });
 
+test('run.create accepts strict multimodal text/image blocks and fingerprints the exact payload', async t => {
+  const { gateway, engine, call } = fixture(t);
+  const input = [
+    { type: 'input_text', text: 'Summarize this screenshot.' },
+    { type: 'input_image', image_url: 'data:image/png;base64,aGVsbG8=' },
+  ];
+  const args = { operationId: 'image-run', sessionId: 'session-native', input };
+  const first = await call('run.create', args);
+  await collected(engine);
+  assert.equal(first.status, 'accepted');
+  assert.deepEqual(gateway.writes()[0].body, { session_id: args.sessionId, input });
+  assert.deepEqual(await call('run.create', args), first);
+  await assert.rejects(call('run.create', { ...args, input: [input[0], { ...input[1], image_url: 'data:image/png;base64,d29ybGQ=' }] }), /operation_identity_conflict/);
+  assert.equal(gateway.writes().length, 1);
+});
+
+test('run.create rejects malformed, unsupported, excessive and oversized image blocks before gateway write', async t => {
+  const { gateway, call } = fixture(t);
+  const cases = [
+    [{ type: 'input_image', image_url: 'https://example.invalid/image.png' }],
+    [{ type: 'input_image', image_url: 'data:image/svg+xml;base64,PHN2Zz4=' }],
+    [{ type: 'input_image', image_url: 'data:image/png;base64,not base64' }],
+    Array.from({ length: 9 }, () => ({ type: 'input_text', text: 'x' })),
+    [{ type: 'input_image', image_url: `data:image/png;base64,${Buffer.alloc(4 * 1024 * 1024 + 1).toString('base64')}` }],
+  ];
+  for (let i = 0; i < cases.length; i++) await assert.rejects(call('run.create', { operationId: `bad-image-${i}`, sessionId: 's', input: cases[i] }));
+  assert.equal(gateway.writes().length, 0);
+});
+
 test('run admission refuses memory-only idempotency and invalid keys before any write', async t => {
   const { gateway, call } = fixture(t); gateway.cap.features.runs_idempotency.durable = false;
   await assert.rejects(call('run.create', { operationId: 'key', sessionId: 's', input: 'x' }), /durable_run_idempotency_required/);

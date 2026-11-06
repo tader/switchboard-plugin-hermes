@@ -32,7 +32,8 @@ export class Bridge {
     try {
       const u = new URL(request.url, 'http://127.0.0.1'); if (u.search) throw new Fault('bridge_route_not_allowed', 403);
       let size = 0; const chunks = [];
-      for await (const chunk of request) { size += chunk.length; if (size > 262144) throw new Fault('request_too_large', 413); chunks.push(chunk); }
+      const bodyLimit = u.pathname === '/operations/hermes.run.create' ? 6 * 1024 * 1024 : 262144;
+      for await (const chunk of request) { size += chunk.length; if (size > bodyLimit) throw new Fault('request_too_large', 413); chunks.push(chunk); }
       let body; try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { throw new Fault('invalid_json'); }
       const result = await this.dispatch(request.method, u.pathname, request.headers.authorization, body, controller.signal);
       response.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' }); response.end(JSON.stringify(result));
