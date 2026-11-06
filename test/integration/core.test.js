@@ -154,7 +154,7 @@ for (const release of releases) test(`Switchboard ${release.tag} (${release.role
     const runArgs = { profile: 'default', operationId: 'peer-run/key:exact', sessionId: session.sessionId, input };
     const admitted = await remoteCall('hermes.run.create', runArgs); assert.equal(admitted.status, 'accepted');
     const forwardedInput = gateway.writes().find(w => new URL(w.url).pathname === '/v1/runs')?.body.input;
-    assert.ok(JSON.stringify(forwardedInput) === JSON.stringify(input), 'peer forwards the entire image payload unchanged');
+    assert.deepEqual(forwardedInput, [{ role: 'user', content: input }], 'peer forwards the entire image payload in a native user message');
     await waitFor(() => held, 'sse_attached');
     const live = await waitFor(async () => {
       const p = await remoteCall('hermes.run.events', { profile: 'default', runId: admitted.result.run_id }); return p.events.length ? p : undefined;

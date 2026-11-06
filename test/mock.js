@@ -38,6 +38,8 @@ export class Gateway {
       return json(session[2] ? { object: 'list', session_id: session[1] + '_tip', data: [{ id: 'msg1', role: 'tool', content: 'result', tool_call_id: 'call1' }], pagination: Object.fromEntries(u.searchParams) } : { object: 'hermes.session', session: this.sessions.get(key(session[1])) });
     }
     if (route === '/v1/runs' && init.method === 'POST') {
+      // Match the native gateway: arrays are messages, not bare content parts.
+      if (Array.isArray(body.input) && !body.input.at(-1)?.content) return json({ error: 'No user message found in input' }, 400);
       const id = 'run_' + init.headers['Idempotency-Key'].replaceAll('/', '_');
       this.runs.set(key(id), { run_id: id, session_id: body.session_id, status: 'running' });
       if (this.failWrite) throw new Error('accepted but response lost');
