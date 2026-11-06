@@ -78,7 +78,7 @@ test('run.create accepts strict multimodal text/image blocks and fingerprints th
   const first = await call('run.create', args);
   await collected(engine);
   assert.equal(first.status, 'accepted');
-  assert.deepEqual(gateway.writes()[0].body, { session_id: args.sessionId, input });
+  assert.deepEqual(gateway.writes()[0].body, { session_id: args.sessionId, input: [{ role: 'user', content: input }] });
   assert.deepEqual(await call('run.create', args), first);
   await assert.rejects(call('run.create', { ...args, input: [input[0], { ...input[1], image_url: 'data:image/png;base64,d29ybGQ=' }] }), /operation_identity_conflict/);
   assert.equal(gateway.writes().length, 1);
