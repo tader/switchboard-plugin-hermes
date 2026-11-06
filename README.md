@@ -40,7 +40,7 @@ Every operation except `hermes.profiles.list` takes `profile`. Unknown arguments
 | `hermes.session.get` | `sessionId`. Native session response. |
 | `hermes.session.history` | `sessionId`, `limit?` (max 500), `offset?`, `order?` (`latest`/`oldest`). Native message/tool IDs and compression-tip session ID preserved. |
 | `hermes.session.create` | `operationId`, `title?`. Derives one stable native session ID from namespace/action, sends `POST /api/sessions` once. Returns its remote session ID and durable receipt. |
-| `hermes.run.create` | `operationId`, `sessionId`, `input`. Uses **exact `operationId` as `Idempotency-Key`**, requires live durable native idempotency, returns a native run ID and starts event observation. No model/provider override. |
+| `hermes.run.create` | `operationId`, `sessionId`, `input`. Input accepts text or bounded text/image content blocks with inline PNG, JPEG or WebP images. Uses **exact `operationId` as `Idempotency-Key`**, requires live durable native idempotency, returns a native run ID and starts event observation. No model/provider override. |
 | `hermes.run.status` | `runId`. Fresh native status; eligible event observation may resume. |
 | `hermes.run.stop` | `operationId`, `runId`. One stop request; acceptance does not imply settlement. |
 | `hermes.run.events` | `runId`, `afterSeq?` (default -1), `limit?` (1–100), `snapshotRevision?`. Durable finite JSON event page; can resume read-only observation. |
@@ -49,6 +49,8 @@ Every operation except `hermes.profiles.list` takes `profile`. Unknown arguments
 | `hermes.action.get` | `operationId`. Stored receipt only, no upstream action. |
 | `hermes.retention.status` | Local scoped snapshot/receipt/uncertainty counters and disk usage; no gateway request. |
 | `hermes.run.retire` | `runId`. Idempotently retire only a settled terminal snapshot in this scope; preserve action receipts and uncertain/pending work. |
+
+Image blocks are limited to 4 MiB decoded in total. Peer connections have a smaller 2 MiB message limit, including base64 and the request envelope; callers must size images accordingly.
 
 Authority support is established from native `run_unknown_resolution:true` plus fresh run status containing `pending_controls` and integer `execution_generation`. This is necessary because the inspected native capability table does not advertise a dedicated clarify flag/endpoint. Native clarification still uses the real `/v1/runs/{id}/clarify` route and strict `{request_id,execution_generation,answer}` body. Without that evidence clarification is rejected; no fallback through chat send. Authority approvals use the strict generation body; legacy approvals use exact `{request_id,choice}` after checking fresh pending status.
 

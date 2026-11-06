@@ -150,8 +150,11 @@ for (const release of releases) test(`Switchboard ${release.tag} (${release.role
     milestones.push('actual_two_core_peer_openapi_and_json_calls');
     const session = await remoteCall('hermes.session.create', { profile: 'default', operationId: 'peer-session' });
     assert.equal(session.status, 'accepted');
-    const runArgs = { profile: 'default', operationId: 'peer-run/key:exact', sessionId: session.sessionId, input: 'inert mock only' };
+    const input = [{ type: 'input_text', text: 'inert mock only' }, { type: 'input_image', image_url: `data:image/png;base64,${Buffer.alloc(900 * 1024, 7).toString('base64')}` }];
+    const runArgs = { profile: 'default', operationId: 'peer-run/key:exact', sessionId: session.sessionId, input };
     const admitted = await remoteCall('hermes.run.create', runArgs); assert.equal(admitted.status, 'accepted');
+    const forwardedInput = gateway.writes().find(w => new URL(w.url).pathname === '/v1/runs')?.body.input;
+    assert.ok(JSON.stringify(forwardedInput) === JSON.stringify(input), 'peer forwards the entire image payload unchanged');
     await waitFor(() => held, 'sse_attached');
     const live = await waitFor(async () => {
       const p = await remoteCall('hermes.run.events', { profile: 'default', runId: admitted.result.run_id }); return p.events.length ? p : undefined;
