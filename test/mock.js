@@ -40,6 +40,8 @@ export class Gateway {
     if (route === '/v1/runs' && init.method === 'POST') {
       // Match the native gateway: arrays are messages, not bare content parts.
       if (Array.isArray(body.input) && !body.input.at(-1)?.content) return json({ error: 'No user message found in input' }, 400);
+      // Hermes persists native `text` parts and image_url markers; input_text would be lost from history.
+      if (Array.isArray(body.input) && body.input.at(-1).content.some(p => !['text', 'image_url'].includes(p.type))) return json({ error: 'Non-native content type' }, 400);
       const id = 'run_' + init.headers['Idempotency-Key'].replaceAll('/', '_');
       this.runs.set(key(id), { run_id: id, session_id: body.session_id, status: 'running' });
       if (this.failWrite) throw new Error('accepted but response lost');
